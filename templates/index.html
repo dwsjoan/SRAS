@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title data-cn="语音识别转文字" data-en="Speech Recognition"></title>
+    <meta name="renderer" content="webkit" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link href="/static/layui/css/layui.css" rel="stylesheet" />
+    <style>
+      .preview-scroll {
+        max-height: 450px;
+        overflow: auto;
+      }
+
+      .flex {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-top: 10px;
+        margin-left: 200px;
+      }
+
+      .flex-left {
+        display: flex;
+        align-items: center;
+      }
+
+      .my-1 {
+        margin-top: 10px;
+        margin-bottom: 10px;
+      }
+
+      .p-2 {
+        padding: 15px;
+      }
+
+      .ws-index-main h1 {
+        text-align: center; /* 设置 h1 居中对齐 */
+        font-size: 60px; /* 设置 h1 字体大小，可以根据需要调整 */
+      }
+      .ws-index-main h2 {
+        text-align: center; /* 设置 h2 居中对齐 */
+      }
+
+      .text-center {
+        text-align: center;
+      }
+
+      .name {
+        margin-right: 8px;
+        width: 200px;
+      }
+
+      #upload {
+        display: block;
+        margin-bottom: 10px;
+        border-style: solid;
+        padding: 50px 30px;
+      }
+
+      .layui-form {
+        margin: 15px auto;
+      }
+
+      .result-list {
+        margin-top: 8px;
+        margin-bottom: 8px;
+        padding: 5px;
+        border-bottom: 1px solid #f1f1f1;
+      }
+
+      .result-list .name {
+        width: 150px;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        text-align: left;
+      }
+
+      #content {
+        width: 80%;
+        min-width: 800px;
+        max-width: 1400px;
+        margin: 75px auto 50px;
+      }
+
+      .worktype {
+        color: #999;
+        font-size: 12px;
+      }
+      .text-res {
+        margin-bottom: 15px;
+      }
+      .text-res-file {
+        margin-bottom: 6px;
+      }
+      .status {
+        margin-left: 20px;
+        width: 200px;
+        white-space: break-spaces;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="layui-layout layui-layout-admin">
+      <div class="layui-header ws-header ws-bg-light">
+      <div class="layui-container">
+      <div class="github-logo">
+        <a class="logo" href="https://github.com/dwsjoan/SRAS">
+          <img src="/static/images/58-github-2.png" alt="layui">
+        </a>
+      </div>
+        <!-- 头部区域（可配合layui 已有的水平导航） -->
+        <ul class="layui-nav layui-layout-right">
+          <!-- 移动端显示 -->
+          <li id="checkupdate" class="layui-nav-item layui-hide">
+            <a
+              href="https://github.com/dwsjoan/SRAS/releases"
+              class="layui-font-red"
+              target="_blank"
+              style="font-weight: bold;"
+            ></a>
+          </li>
+          <li class="layui-nav-item layui-hide-xs">
+            <a
+              href="https://github.com/dwsjoan/SRAS/issues"
+              target="_blank"
+              data-en="Post Issue"
+              data-cn="遇到问题"
+              style="color: #C71D23; font-weight: bold;"
+            ></a>
+          </li>
+          <li class="layui-nav-item layui-hide-xs">
+            <a
+              onclick="modeldown(this); return false;"
+              href='https://github.com/jianchang512/sts/releases/tag/0.0'
+              target="_blank"
+              data-cn="下载模型"
+              data-en="Download models"
+              style="color: #ffb800; font-weight: bold;"
+            ></a>
+          </li>
+          <li class="layui-nav-item layui-hide-xs">
+            <a href="https://github.com/dwsjoan/SRAS" target="_blank" sponsor="Github" style="color:#16baaa;">
+            <strong>Github</strong>
+          </a>
+          </li>
+          <li class="layui-nav-item layui-hide-xs">
+            <a
+              href="https://github.com/dwsjoan/SRAS"
+              target="_blank"
+              onclick="showmail(this); return false;"
+              data-cn="邮箱"
+              data-en="E-mail"
+              style="color: #23A7E8; font-weight: bold;"
+          ></a>
+          <li class="layui-nav-item layui-hide-xs">
+            <a
+              href="https://github.com/dwsjoan/SRAS"
+              onclick="showqqgroup(this); return false;"
+              target="_blank"
+              data-cn="QQ"
+              data-en="QQ"
+              style="color: #9B16FF; font-weight: bold;"
+          ></a>
+          </li>
+        </ul>
+      </div>
+      </div>
+      <div id="content">
+        <div class="ws-container">
+          <div style="height: 20px;"></div>
+          <div class="ws-index-main">
+<!--            <h1>-->
+<!--              Layui-->
+<!--            </h1>-->
+            <h1 class="ws-logo layui-hide-xs"
+              data-en="Speech Recognition and AI Summary"
+              data-cn="语音识别及AI总结">
+            </h1>
+            <h2 class="ws-logo layui-hide-xs"
+              data-en="{{ version }}"
+              data-cn="{{ version }}">
+            </h2>
+            <div class="ws-index-showcase"></div>
+          </div>
+        </div>
+        <div style="height: 30px;"></div>
+        <!-- 内容主体区域 -->
+        <div class="layui-upload-drag layui-border-black" id="upload">
+          <div class="ws-logo">
+            <a class="logo">
+              <img src="/static/images/upload33x37.png" alt="layui">
+            </a>
+          </div>
+          <div style="height: 10px;"></div>
+          <div
+            data-cn="点击上传，或将音频视频文件拖拽到此处(wav,mp3,flac,mp4,mov,mkv,avi,mpeg)"
+            data-en="Click to upload or drag video or audio to here(wav,mp3,flac,mp4,mov,mkv,avi,mpeg)"
+          ></div>
+          <div class="layui-hide my-1" id="preview">
+            <div class="preview-scroll"></div>
+          </div>
+        </div>
+        <form class="layui-form text-center">
+          <div
+            class="layui-label-text layui-font-12 my-1 layui-font-gray"
+            data-en="funasr model only supports Simplified Chinese, careful selection of parallel funasr with low memory. If you do not have the CUDA acceleration environment, do not choose large series models"
+            data-cn="funasr模型仅支持简体中文，显存较小时谨慎选用并行funasr。如不具备CUDA加速环境，请勿选用large系模型"
+          ></div>
+          <div class="layui-form-item layui-inline">
+            <label
+              class="layui-form-label"
+              style="width: auto"
+              data-cn="选择语言"
+              data-en="Choose Language"
+            ></label>
+            <div class="layui-input-inline">
+              <select name="language">
+                {% for name,val in lang_code.items() %}
+                <option value="{{ val[0] }}">{{ name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+          <div class="layui-form-item layui-inline">
+            <label
+              class="layui-form-label"
+              style="width: auto"
+              data-cn="选择设备"
+              data-en="Choose Device"
+            ></label>
+            <div class="layui-input-inline">
+              <select name="device">
+                <option value="cuda">CUDA</option>
+                <option value="cpu">CPU</option>
+              </select>
+            </div>
+          </div>
+          <div class="layui-form-item layui-inline">
+            <label
+              class="layui-form-label"
+              style="width: auto"
+              data-cn="选择语音识别模型"
+              data-en="Select ASRmodel"
+            ></label>
+            <div class="layui-input-inline">
+              <select name="asrmodel">
+                <option value="funasr">funasr</option>
+                <option value="funasrp">funasr-{{ p_num }} parallel</option>
+                <option value="base">whisper-base</option>
+                <option value="small">whisper-small</option>
+                <option value="medium">whisper-medium</option>
+                <option value="large-v3">whisper-largev3</option>
+              </select>
+            </div>
+          </div>
+          <div
+            class="layui-label-text layui-font-12 my-1 layui-font-gray"
+            data-en="Results in srt and json formats are directly generated by selected model, and do not support other functions such as speaker recognition and AI summarization"
+            data-cn="srt与json格式的结果由所选模型直接生成，不支持说话人识别及AI总结等功能"
+          ></div>
+          <div class="layui-form-item layui-inline">
+            <label
+              class="layui-form-label"
+              style="width: auto"
+              data-cn="返回文字格式"
+              data-en="Return To Text Format"
+            ></label>
+          <div class="layui-input-inline">
+              <select id="data_type" name="data_type">
+                <option value="text"
+                        data-cn="纯文字"
+                        data-en="text"
+                ></option>
+                <option
+                  value="srt"
+                  data-cn="srt字幕格式"
+                  data-en="subtitles srt files"
+                ></option>
+                <option value="json">json</option>
+              </select>
+            </div>
+          </div>
+          <div
+            class="layui-label-text layui-font-12 my-1 layui-font-gray"
+            data-en="The following options take effect only when the return format is text. The punctuation model only works when using whisper"
+            data-cn="仅当返回格式为text时下列选项生效。仅在使用whisper模型时使用标点模型功能有效"
+          ></div>
+          <div class="layui-form-item layui-inline">
+            <label
+              class="layui-form-label"
+              style="width: auto"
+              data-cn="说话人分割"
+              data-en="Speaker Diarization"
+            ></label>
+            <div class="layui-input-inline">
+              <select id="spkdi" name="spkdi">
+                <option value="no"
+                        data-cn="关"
+                        data-en="OFF"
+                ></option>
+                <option
+                  value="punc"
+                  data-cn="开（修正标点）"
+                  data-en="ON（Correct punctuation）"
+                ></option>
+                <option
+                  value="nopunc"
+                  data-cn="开（使用原标点）"
+                  data-en="ON（Use original punctuation）"
+                ></option>
+              </select>
+            </div>
+          </div>
+          <div class="layui-form-item layui-inline">
+            <label
+              class="layui-form-label"
+              style="width: auto"
+              data-cn="AI总结"
+              data-en="AI Summary"
+            ></label>
+            <div class="layui-input-inline">
+              <select id="aisummary" name="aisummary">
+                <option value="no"
+                        data-cn="关"
+                        data-en="OFF"
+                ></option>
+                <option
+                  value="ernie_speed"
+                  data-cn="开（Baidu_ernie_speed）"
+                  data-en="ON（Baidu_ernie_speed）"
+                ></option>
+                <option
+                  value="gemini_flash"
+                  data-cn="开（Gemini-1.5-flash）"
+                  data-en="ON（Gemini-1.5-flash）"
+                ></option>
+              </select>
+            </div>
+          </div>
+          <!-- 自动导出开关 -->
+          <div class="layui-form-item layui-inline">
+            <label
+              class="layui-form-label"
+              style="width: auto"
+              data-cn="自动导出"
+              data-en="Auto-export"
+            ></label>
+            <div class="layui-input-inline">
+              <select id="switch" name="switch">
+                <option value="off" data-cn="关" data-en="OFF"></option>
+                <option value="on" data-cn="开" data-en="ON"></option>
+              </select>
+            </div>
+          </div>
+          <!-- 是否独立导出 -->
+          <div class="layui-form-item layui-inline">
+            <label
+              class="layui-form-label"
+              style="width: auto"
+              data-cn="独立导出"
+              data-en="Export Independently"
+            ></label>
+            <div class="layui-input-inline">
+              <select id="isIndependent" name="isIndependent">
+                <option value="off" data-cn="关" data-en="OFF"></option>
+                <option value="on" data-cn="开" data-en="ON"></option>
+              </select>
+            </div>
+          </div>
+           <div
+            class="layui-label-text layui-font-12 my-1 layui-font-gray"
+            data-en="Please enter the KEY in the corresponding area according to the platform you choose"
+            data-cn="请根据选用的平台在下方对应区域内输入KEY"
+          ></div>
+          <div class="layui-form-item layui-inline">
+          <div class="layui-input-group">
+            <div class="layui-input-split layui-input-prefix">
+              Baidu Qianfan API_Key
+            </div>
+            <input type="text" id="qianfan_apikey" placeholder="use for ernie-speed-128k" name="qianfan_apikey" class="layui-input" size="40">
+          </div>
+        </div>
+          <div class="layui-form-item layui-inline">
+          <div class="layui-input-group">
+            <div class="layui-input-split layui-input-prefix">
+              Baidu Qianfan Secret_Key
+            </div>
+            <input type="text" id="qianfan_SecretKey" placeholder="use for ernie-speed-128k" name="qianfan_SecretKey" class="layui-input" size="40">
+          </div>
+        </div>
+          <div class="layui-form-item layui-inline">
+          <div class="layui-input-group">
+            <div class="layui-input-split layui-input-prefix">
+              Gemini API_KEY
+            </div>
+            <input type="text" id="gemini_apikey" placeholder="use for gemini-1.5-flash" name="gemini_apikey" class="layui-input" size="40">
+          </div>
+        </div>
+          <div class="layui-form-item layui-form-block">
+            <input type="hidden" id="wav_name" name="wav_name" />
+            <input type="hidden" id="file_num" name="file_num" />
+            <input type="hidden" id="web_language" name="web_language" />
+            <button
+              type="submit"
+              class="layui-btn layui-btn-danger"
+              lay-submit
+              lay-filter="submit"
+              data-cn="立即识别"
+              data-en="Start Recognition"
+              id="submit-btn"
+              style="background-color: #1e9fff; color: white;"
+            >
+              <img src="static/images/icons8-loading.gif" style="display: none" width="21" height="21" />
+            </button>
+            <div
+              class="layui-btn layui-btn-disabled"
+              data-cn="导出文本"
+              data-en="Export Text"
+              id="export-btn"
+            ></div>
+          </div>
+        </form>
+        <div class="layui-card">
+          <div class="layui-card-body text-contain" style="padding: 10px 0">
+            <textarea
+              placeholder-cn="结果在此显示"
+              placeholder-en="Result list in here"
+              class="layui-textarea"
+              id="result"
+              readonly
+              cols="30"
+              rows="10"
+            ></textarea>
+          </div>
+        </div>
+      </div>
+  </div>
+    <script src="/static/layui/layui.js"></script>
+    <script>
+
+      let language = "{{ language }}"; //从模板中获取语言设置，存储在变量 language 中
+      window.$ = layui.$; //将全局的 jQuery 对象设置为 layui 的 jQuery 对象，简化代码中的 jQuery 使用
+      let intervalId = null;
+
+      if (language === "zh") { //如果语言为中文，则将页面中标记有 data-cn 的元素内容替换为其属性值
+        $("[data-cn]").each(function () {
+          $(this).html($(this).html() + $(this).attr("data-cn"));
+        });
+        $("[placeholder-cn]").each(function () {
+          $(this).attr("placeholder", $(this).attr("placeholder-cn"));
+        });
+      } else { //否则，将标记有 data-en 的元素内容替换为其属性值
+        $("[data-en]").each(function () {
+          $(this).html($(this).html() + $(this).attr("data-en"));
+        });
+        $("[placeholder-en]").each(function () {
+          $(this).attr("placeholder", $(this).attr("placeholder-en"));
+        });
+      }
+      var pending_files = []; //定义一个数组，用于存储待处理的文件信息
+      var processing = false; //定义一个变量，表示是否正在处理文件
+      let fileCount = 0;  //上传文件个数
+      function get_file_el(file_name) { //定义get_file_el函数，用于根据文件名获取文件元素的jQuery对象
+        return $(`.flex[name="${file_name}"]`); //jQuery选择器查找具有flex类且name属性值等于file_name的元素
+      }
+      function set_status(file_name, status, color) { //定义set_status函数，用于设置文件的处理状态并显示
+        var file_element = get_file_el(file_name);
+        file_element.find(".status").html(status).show().css("color", color);
+      }
+      var getprogress = function (file_name, field, star_time) { //定义一个函数，用于获取文件处理的进度信息
+        var file_element = get_file_el(file_name);
+        var done = null;
+        var handler = function () { //定义handler的函数，用于处理进度条的更新
+          $.post("/progressbar", field, function (res) { //发送带有数据field的请求到服务器/progressbar路径，请求成功则执行一个回调函数，函数返回结果为res
+            if (res.code !== 0) { //如果响应中的code不等于0，则表示请求出现了错误
+              done({
+                error: res.msg,
+                file_name,
+              });
+              set_status(file_name, res.msg, "#ff5722");
+            }
+            /* const percentage = `${(res["data"] * 100).toFixed(2)}%`;*/ //如果请求成功，会计算进度百分比，并将其保存在 percentage 变量中
+            /* set_status(file_name, percentage, "#16b777");*/ //显示文件的状态为当前进度百分比，状态颜色为绿色
+            set_status(file_name, res["specificprogress"], "#16b777");
+            if (res["data"] >= 1) { //如果进度达到了100%（即 res["data"] 大于等于 1），则表示处理完成
+              var sec = +new Date() - star_time; //随后会计算处理所花费的时间
+              set_status(  //更新文件的状态为处理完成
+                file_name,
+                `100%     ${(sec / 1000).toFixed(2)} sec`,
+                "#16b777"
+              );
+              if (done) {  //调用done函数传递响应信息和文件名
+                done({
+                  res,
+                  file_name,
+                });
+              }
+              return;
+            }
+            setTimeout(() => { //递归调用handler函数来持续更新处理进度，每隔 500 毫秒发送一次请求
+              handler();
+            }, 500);
+          }).fail(function () { //如果请求失败，则通过 setTimeout 函数再次调用 handler 函数，以重新尝试获取进度
+            setTimeout(() => {
+              handler();
+            }, 500);
+          });
+        };
+        handler(); //运行handler函数
+        return {
+          done: function (cb) {
+            done = cb;
+          },
+        };
+      };
+      function process(file, field) { //定义一个函数，处理文件上传和处理的逻辑，接受两个参数file和field，分别表示要处理的文件和额外的字段信息
+        /**使用 Promise 包装整个处理过程，以便异步操作完成后能够得到结果
+        resolve 是 Promise 构造函数中的一个函数，用于将 Promise 对象的状态从未完成变为成功，并将处理结果作为参数传递给调用者，由Promise内部提供**/
+        return new Promise(function (resolve) {
+          /*set_status(file.data, "开始", "#16b777");*/ //显示文件状态为 "0%"（即处理进度为0%），并且状态颜色为绿色
+          if (language === "zh") {
+            set_status(file.data, "等待处理", "#16b777");
+          } else {
+            set_status(file.data, "Awaiting processing", "#16b777");
+          }
+          $.post("/process", field, function (res) { //发送POST请求到服务器/process路径，field包含请求的数据，在请求成功时执行一个回调函数，函数返回结果为res
+            if (res.code !== 0) { //如果响应中的code不等于0，则表示处理过程出现了错误
+              resolve({
+                error: res.msg,
+                file_name: file.data,
+              });
+              set_status(file.data, res.msg, "#ff5722");
+              return;
+            }
+            getprogress(file.data, field, +new Date()).done(function (res) { //如果处理过程没有出现错误，则调用getprogress函数来获取处理进度
+              resolve(res); //一旦处理完成，将得到的结果通过resolve函数返回
+            });
+          }).fail(function (msg) { //如果请求失败，则将错误信息和文件名包装成一个对象，并通过 resolve 函数返回
+            set_status(file.data, msg.statusText, "#ff5722");
+            resolve({
+              error: msg.statusText,
+              file_name: file.data,
+            });
+          });
+        });
+      }
+      function process_loading() { //定义函数 process_loading()，内含两个方法：start() 和 end()
+        return {
+          start: function () { //start() 方法用于启动处理过程
+            processing = true; //将processing变量设置为true
+            $("#submit-btn").addClass("layui-btn-disabled").find("img").show(); //给按钮$("#submit-btn")添加layui-btn-disabled类以禁用按钮，并显示按钮内的图标
+          },
+          end: function () { //end()方法同理
+            processing = false;
+            $("#submit-btn").removeClass("layui-btn-disabled").find("img").hide();
+          },
+        };
+      }
+      layui.use(function () { //使用layui的模块加载器layui.use()，用于初始化页面中的一些layui插件和组件，并定义了一些事件处理逻辑
+        //引入了layui的元素操作模块element和弹出层模块layer，以及上传组件 upload 和表单模块 form
+        var element = layui.element;
+        var layer = layui.layer;
+        var upload = layui.upload;
+        let form = layui.form;
+        let layindex1 = null;
+        /**调用了 layui 的上传组件的render方法,初始化一个文件上传区域，
+        指定了上传按钮的选择器elem、上传接口的URL url、文件类型限制exts等参数
+        并定义了选择文件、上传前、上传成功以及全部上传完成等事件的处理函数**/
+        upload.render({
+          elem: "#upload", //指定了上传按钮的选择器，即按钮的id为upload。
+          field: "audio", //指定了上传文件的字段名为 audio，这是在表单提交时后台接收文件的字段名
+          accept: "file", //指定了上传的文件类型为任意文件类型
+          exts: "mp4|mp3|flac|wav|avi|mkv|mpeg|mov", //指定了上传文件的扩展名限制
+          multiple: true, //允许同时选择多个文件进行上传
+          url: "/upload", // 指定了文件上传的接口 URL，即文件将会被上传到该地址，实际使用时改成您自己的上传接口即可
+          choose: function () { //选择文件后的回调函数，在选择文件时会清空 pending_files 数组，准备存放新选择的文件
+            pending_files = [];
+          },
+          before: function () { //上传文件前的回调函数，如果正在处理文件（即 processing 为 true），则返回 false，阻止上传动作
+            if (processing) {
+              return false;
+            }
+          },
+          done: function (res) { //上传成功的回调函数，将上传成功的文件信息存放到 pending_files 数组中，并打印上传结果到控制台。
+            pending_files.push(res);
+            fileCount=pending_files.length;
+            $('#file_num').val(fileCount);
+            $('#web_language').val(language);
+            /* $('#wav_name').val(res.data); */
+            console.log(res);
+          },
+          allDone: function () { //全部上传完成后的回调函数，生成预览区域的 HTML 代码，显示上传的文件列表和相关信息
+            const file_element = pending_files.reduce((prev, cur) => {
+              return `${prev}
+                    <div class="flex" name="${cur.data}">
+                        <span class="name">${cur.msg} ${cur.data || ""}</span>
+                        <audio src="/static/tmp/${cur.data}" controls></audio>
+                        <div class="status"></div>
+                    </div>
+                    `;
+            }, "");
+            $("#preview").removeClass("layui-hide").html(`
+                    <hr>
+                    <div class="preview-scroll">${file_element}</div>
+                `);
+          },
+        });
+        function exportText(title, text) { // 定义函数用于导出文本文件。根据指定的文件名和文本内容，创建并下载对应的文本文件
+            var file_type = $("#data_type").val();
+            var file_name = title.replace('wav', file_type)
+            var blob = new Blob([text], {
+              type: "text/plain",
+            });
+            var url = URL.createObjectURL(blob);
+            var aEl = document.createElement("a");
+            aEl.href = url;
+            aEl.target = "_blank";
+            aEl.download = file_name;
+            aEl.click();
+            aEl.remove();
+            URL.revokeObjectURL(url);
+          }
+        $("#export-btn").click(function () { //给导出按钮#export-btn添加点击事件处理函数
+          if ($(this).hasClass("layui-btn-disabled")) {
+            return;
+          }
+          var textElList = $(".text-res");
+          if (!textElList.length) {
+            layer.alert(
+              language === "zh"
+                ? "请先识别后再进行导出!"
+                : "Please process first before exporting!",
+              { title: false }
+            );
+            return;
+          }
+          // 根据用户选择的导出模式，单独导出每个文件的识别结果或合并导出所有文件的识别结果
+          if($("#isIndependent").val() === 'on') {
+            var file_type = $("#data_type").val();
+            [...textElList].forEach((el) => {
+              var title = $(el).find(".text-res-file").text();
+              var text = $(el).find("textarea").val();
+              exportText(title, text)
+            });
+          }else{
+            var exportInfos = [...textElList]
+            .map(function (el) {
+              var info = {
+                title: $(el).find(".text-res-file").text(),
+                text: $(el).find("textarea").val(),
+              };
+              return `${info.text}`;
+            })
+            .join("\n\n\n");
+            var blob = new Blob([exportInfos], {
+              type: 'text/plain'
+            })
+            var url = URL.createObjectURL(blob)
+            var aEl = document.createElement('a')
+            aEl.href = url
+            aEl.target = '_blank'
+            aEl.download = 'result.txt'
+            aEl.click()
+            aEl.remove()
+            URL.revokeObjectURL(url)
+          }
+        });
+//定义了一个表单提交事件的处理函数
+//在用户提交表单时，先进行必要的验证，然后执行文件处理的流程。包括禁用导出按钮、显示识别结果区域、处理文件识别、显示识别结果和启用导出按钮等步骤
+//添加了一个事件监听器，监听了表单提交事件，并指定了事件名称为 "submit"。当表单被提交时，指定的函数会被调用，函数接收一个参数 data，其中包含了表单提交的数据
+        form.on("submit(submit)", function (data) {
+          console.log('submit', data) //输出日志，显示提交事件发生，并打印出提交的数据 data
+          if (processing) { //如果 processing 的值为 true，则说明正在进行处理，此时不应该执行后续的操作，直接返回
+            return;
+          }
+          var field = data.field; //获取了表单提交的所有字段值，并将其赋值给变量 field
+          if (!pending_files.length) { //如果pending_files数组的长度为 0，弹出警告框提示用户，并返回false阻止默认的表单提交行为
+            layer.alert(
+              language === "zh"
+                ? "必须先上传要识别的音频或视频文件!"
+                : "The file to be recognition must be uploaded first!",
+              { title: false }
+            );
+            return false;
+          }
+          process_loading().start();  // 调用process_loading函数的start方法,将processing设置为true并禁用submit-btn按钮
+          $("#export-btn").addClass("layui-btn-disabled"); // 按钮禁用
+          //将一个文本区域添加到页面中，用于显示识别结果。如果用户选择了中文，文本区域会显示 "识别结果在此显示"，否则显示 "Result list in here"。
+          $(".text-contain").html(`
+          <textarea
+              placeholder="${
+                language === "zh" ? "识别结果在此显示" : "Result list in here"
+              }"
+              class="layui-textarea res-placeholder"
+              id="result"
+              readonly
+              cols="30"
+              rows="10"
+            ></textarea>
+          `);
+          //function getText(res) {
+          //  try {
+          //    if (typeof res === "string") {
+          //      return res;
+          //    }
+          //    return JSON.stringify(res);
+          //  } catch (e) {
+          //    return res;
+          //  }
+          //}
+          Promise.allSettled( // 创建了一个Promise，用于批量处理上传的文件。遍历pending_files 数组中的每一个文件，并对每个文件调用process函数
+            pending_files.map(function (file) {
+              return process(file, {
+                ...field,
+                wav_name: file.data,
+              }).then(function (res) {
+                $(".res-placeholder").hide(); // 识别结果文本区域以及导出避免误操作
+                $("#export-btn").removeClass("layui-btn-disabled");
+                var texts_el = document.createElement("div"); // 文件名显示
+                texts_el.className = "text-res";
+                $(texts_el).html(
+                  `<div class="text-res-file">${res.file_name}</div>
+                    <textarea
+                        name="${res.file_name}"
+                        class="layui-textarea"
+                        cols="30"
+                        rows="10"
+                    ></textarea>`
+                );
+                $(".text-contain").append(texts_el);
+                //$(texts_el).find("textarea").val(getText(res.res.result));
+                $(texts_el).find("textarea").val(res.res.result);
+                // 自动导出
+                if (field.switch === "on") {
+                  //exportText(res.file_name, getText(res.res.result))
+                  exportText(res.file_name, res.res.result)
+                }
+              });
+            })
+          ).finally(function () { //指定了一个最终执行的回调函数，在所有文件处理完成后被调用。
+            process_loading().end(); // 识别按钮解禁
+          });
+          return false; // 阻止默认 form 跳转
+        });
+        setTimeout(() => { //设置了一个定时器，每隔一分钟向服务器发送一次检查更新的请求，并根据服务器返回的信息更新页面中的提示内容。
+          $.get("/checkupdate", function (res) {
+            if (res.code === 0 && res.msg) {
+              $("#checkupdate").removeClass("layui-hide");
+              $("#checkupdate a").text(res.msg);
+            }
+          });
+        }, 60000);
+      });
+      function showmail(el) {
+        layer.alert(
+              language === "zh"
+                ? "邮箱 j1301771092@gmail.com"
+                : " j1301771092@gmail.com",
+              { title: "Mail" }
+            );
+      }
+      function showqqgroup(el) {
+        layer.alert(
+              language === "zh"
+                ? "QQ 2200518834"
+                : "QQ account number 2200518834",
+              { title: "QQ" }
+            );
+      }
+      function modeldown(el) {
+        layer.alert(
+          language === "zh"
+            ? '<div>请将下载后的模型放置在models文件夹下，如下图所示<br><img src="/static/images/example.png" alt="example" style="width: 500px; height: auto;"></div>'
+            : '<div>Please place the downloaded model in the models folder, as shown in the image below<br><img src="/static/images/example.png" alt="example" style="width: 500px; height: auto;"></div>',
+          {btn: [
+              language === "zh" ? "跳转到下载界面" : "Go downloaded"
+            ],
+            btn1: function () {
+              window.location.href = 'https://github.com/jianchang512/sts/releases/tag/0.0';
+            }
+          }
+        );
+      }
+    </script>
+  </body>
+</html>
